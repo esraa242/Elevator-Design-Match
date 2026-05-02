@@ -223,13 +223,15 @@ export default function Home() {
               </button>
             )}
 
-            <CabinMatchCard
-              cabin={activeMatch.cabin as Parameters<typeof CabinMatchCard>[0]["cabin"]}
-              matchScore={activeMatch.matchScore}
-              analysis={`${analyzeMutation.data.interiorStyle} · ${analyzeMutation.data.styleKeywords.slice(0, 3).join(", ")}`}
-              onWhatsApp={() => setShowLeadModal(true)}
-              on3D={() => setShow3DViewer(true)}
-            />
+            <div className="min-h-screen flex items-start justify-center p-6 pt-16">
+              <CabinMatchCard
+                cabin={activeMatch.cabin as Parameters<typeof CabinMatchCard>[0]["cabin"]}
+                matchScore={activeMatch.matchScore}
+                analysis={`${analyzeMutation.data.interiorStyle} · ${analyzeMutation.data.styleKeywords.slice(0, 3).join(", ")}`}
+                onWhatsApp={() => setShowLeadModal(true)}
+                on3D={() => setShow3DViewer(true)}
+              />
+            </div>
           </motion.div>
         )}
 
