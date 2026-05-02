@@ -15,6 +15,17 @@ import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
+function LoginRoute() {
+  const { tenant, isLoading } = useAuth();
+  if (isLoading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+    </div>
+  );
+  if (tenant) return <Redirect to="/" />;
+  return <Login />;
+}
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { tenant, isLoading } = useAuth();
   if (isLoading) return (
@@ -29,7 +40,7 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 function Router() {
   return (
     <Switch>
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={LoginRoute} />
       <Route path="/">
         {() => <ProtectedRoute component={Overview} />}
       </Route>

@@ -3,9 +3,11 @@ import { useAuth } from "@/lib/auth";
 import { apiLogin, apiRegister } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, Mail, Lock, User, Phone, Loader2, AlertCircle } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function Login() {
   const { login } = useAuth();
+  const [, setLocation] = useLocation();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,6 +27,7 @@ export default function Login() {
         result = await apiRegister(form.name, form.email, form.password, form.whatsappNumber || undefined);
       }
       login(result.token, result.tenant);
+      setLocation("/");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
