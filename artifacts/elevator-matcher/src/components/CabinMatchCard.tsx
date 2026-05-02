@@ -161,11 +161,11 @@ export function CabinMatchCard({ cabin, matchScore, analysis, onWhatsApp, on3D }
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55 }}
-      className="w-full max-w-lg mx-auto rounded-2xl overflow-hidden border border-amber-500/15 shadow-[0_0_60px_rgba(184,150,12,0.12)]"
+      className="w-full max-w-lg h-full flex flex-col rounded-2xl overflow-hidden border border-amber-500/15 shadow-[0_0_60px_rgba(184,150,12,0.12)]"
       style={{ background: "#070504" }}
     >
-      {/* ── IMAGE ZONE ── */}
-      <div className="relative" style={{ paddingBottom: "62%" }}>
+      {/* ── IMAGE ZONE — fills all remaining height ── */}
+      <div className="relative flex-1 min-h-0">
         <GoldenRays />
 
         {/* Cabin photo */}

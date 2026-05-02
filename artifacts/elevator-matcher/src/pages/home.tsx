@@ -248,7 +248,7 @@ export default function Home() {
             </aside>
 
             {/* ── MAIN: card ── */}
-            <div className="flex-1 overflow-y-auto flex items-start justify-center p-6">
+            <div className="flex-1 overflow-hidden flex items-stretch justify-center p-4">
               <CabinMatchCard
                 cabin={activeMatch.cabin as Parameters<typeof CabinMatchCard>[0]["cabin"]}
                 matchScore={activeMatch.matchScore}
