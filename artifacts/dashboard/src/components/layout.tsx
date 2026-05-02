@@ -44,12 +44,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           {NAV.map(({ href, icon: Icon, label }) => {
             const isActive = href === "/" ? location === "/" : location === href || location.startsWith(href + "/");
             return (
-              <Link key={href} href={href}>
-                <a className={`sidebar-link ${isActive ? "active" : ""}`}>
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  {label}
-                  {isActive && <ChevronRight className="w-3 h-3 ml-auto text-primary/50" />}
-                </a>
+              <Link key={href} href={href} className={`sidebar-link ${isActive ? "active" : ""}`}>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                {label}
+                {isActive && <ChevronRight className="w-3 h-3 ml-auto text-primary/50" />}
               </Link>
             );
           })}

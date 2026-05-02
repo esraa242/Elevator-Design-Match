@@ -65,3 +65,19 @@ export async function apiToggleCabin(cabinId: number, isEnabled: boolean) {
   if (!r.ok) throw new Error("Failed to update cabin");
   return r.json();
 }
+
+export async function apiCreateCabin(data: Record<string, unknown>) {
+  const r = await fetch(`${BASE}/admin/cabins`, {
+    method: "POST", headers: authHeaders(), body: JSON.stringify(data),
+  });
+  if (!r.ok) throw new Error((await r.json()).error ?? "Failed to create cabin");
+  return r.json();
+}
+
+export async function apiDeleteCabin(cabinId: number) {
+  const r = await fetch(`${BASE}/admin/cabins/${cabinId}`, {
+    method: "DELETE", headers: authHeaders(),
+  });
+  if (!r.ok) throw new Error((await r.json()).error ?? "Failed to delete cabin");
+  return r.json();
+}
