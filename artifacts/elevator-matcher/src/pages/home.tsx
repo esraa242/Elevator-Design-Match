@@ -1,11 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useAnalyzeAndMatch, useCreateLead } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, CheckCircle, Sparkles, Droplet, Layers, Maximize2, Lightbulb, Shield, Smartphone } from "lucide-react";
+import { UploadCloud, CheckCircle, Sparkles, Layers, Maximize2, Lightbulb, Smartphone, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { CabinViewer3D } from "@/components/CabinViewer3D";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -55,6 +56,7 @@ export default function Home() {
 
   const [activeMatchIndex, setActiveMatchIndex] = useState(0);
   const [showLeadModal, setShowLeadModal] = useState(false);
+  const [show3DViewer, setShow3DViewer] = useState(false);
   const [leadName, setLeadName] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
 
@@ -199,10 +201,17 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
               
               {/* Badges */}
-              <div className="absolute top-6 left-6 flex flex-col gap-4">
+              <div className="absolute top-6 left-6 flex flex-col gap-3">
                 <div className="flex items-center gap-2 bg-primary/20 backdrop-blur-md border border-primary/50 text-primary px-4 py-2 rounded-full text-sm font-medium tracking-wide uppercase">
                   <Sparkles className="w-4 h-4" /> AI Matched Design
                 </div>
+                <button
+                  onClick={() => setShow3DViewer(true)}
+                  className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/20 hover:border-primary/60 text-white hover:text-primary px-4 py-2 rounded-full text-sm font-medium tracking-wide uppercase transition-all group"
+                >
+                  <Box className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  View in 3D
+                </button>
               </div>
 
               <div className="absolute top-6 right-6">
@@ -286,6 +295,15 @@ export default function Home() {
         )}
 
       </AnimatePresence>
+
+      {show3DViewer && analyzeMutation.data && (
+        <CabinViewer3D
+          imageUrl={analyzeMutation.data.matches[activeMatchIndex].cabin.imageUrl}
+          cabinName={analyzeMutation.data.matches[activeMatchIndex].cabin.name}
+          matchScore={analyzeMutation.data.matches[activeMatchIndex].matchScore}
+          onClose={() => setShow3DViewer(false)}
+        />
+      )}
 
       <Dialog open={showLeadModal} onOpenChange={setShowLeadModal}>
         <DialogContent className="sm:max-w-md border-border bg-card">
