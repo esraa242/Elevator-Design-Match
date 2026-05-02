@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { Layers, Lightbulb, Square, RotateCcw } from "lucide-react";
+import { Layers, Lightbulb, Sparkles, RotateCcw } from "lucide-react";
 
 interface CabinViewerProps {
   imageUrl: string;
@@ -33,10 +33,10 @@ export function CabinViewer({ imageUrl, cabinName, specs, on3D }: CabinViewerPro
     mouseY.set(0);
   }
 
-  const materialTags = [
-    { icon: <Layers className="w-3 h-3" />, text: specs.wallPanels || "Italian Marble" },
-    { icon: <Lightbulb className="w-3 h-3" />, text: specs.lighting || "LED Lighting 3000K" },
-    { icon: <Square className="w-3 h-3" />, text: specs.finish || "Black Glass Finish" },
+  const specRows = [
+    { icon: <Layers className="w-3 h-3" />,   label: "Material", value: specs.wallPanels || "Italian Wood Panels" },
+    { icon: <Lightbulb className="w-3 h-3" />, label: "Lighting", value: specs.lighting  || "Crystal Lighting 2700K" },
+    { icon: <Sparkles className="w-3 h-3" />,  label: "Finish",   value: specs.finish    || "Handcrafted Finish" },
   ];
 
   return (
@@ -91,22 +91,52 @@ export function CabinViewer({ imageUrl, cabinName, specs, on3D }: CabinViewerPro
           boxShadow: "inset 0 0 40px rgba(184,150,12,0.06)",
         }} />
 
-        {/* Material tags — top-left */}
-        <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-          {materialTags.map((tag, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 + i * 0.1 }}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg"
-              style={{ background: "rgba(8,6,4,0.75)", backdropFilter: "blur(8px)", border: "1px solid rgba(184,150,12,0.2)" }}
-            >
-              <span className="text-amber-400">{tag.icon}</span>
-              <span className="text-[10px] text-white/80 font-medium">{tag.text}</span>
-            </motion.div>
-          ))}
-        </div>
+        {/* Technical spec card — top-left */}
+        <motion.div
+          initial={{ opacity: 0, x: -12 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="absolute top-3 left-3 z-10 rounded-xl overflow-hidden"
+          style={{
+            background: "rgba(6,4,2,0.72)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            minWidth: "170px",
+          }}
+        >
+          {/* Card header */}
+          <div
+            className="flex items-center gap-1.5 px-3 py-1.5"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(184,150,12,0.07)" }}
+          >
+            <div className="w-1 h-1 rounded-full bg-amber-400" />
+            <span className="text-[8px] uppercase tracking-[0.2em] font-semibold text-amber-400/70">
+              Specifications
+            </span>
+          </div>
+
+          {/* Rows */}
+          <div className="px-3 py-2 flex flex-col gap-2">
+            {specRows.map((row, i) => (
+              <motion.div
+                key={row.label}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.75 + i * 0.08 }}
+                className="flex items-center gap-2"
+              >
+                <span className="text-amber-500/50 flex-shrink-0">{row.icon}</span>
+                <span className="text-[9px] text-white/35 uppercase tracking-wider w-12 flex-shrink-0">
+                  {row.label}
+                </span>
+                <span className="text-[10px] text-white/85 font-medium leading-tight">
+                  {row.value}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* 360° rotate hint — bottom-left */}
         <motion.button
