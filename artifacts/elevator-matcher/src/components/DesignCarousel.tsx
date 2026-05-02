@@ -54,8 +54,8 @@ export function DesignCarousel({ matches, activeIndex, onSelect }: DesignCarouse
               whileTap={{ scale: 0.97 }}
               className="relative flex-shrink-0 rounded-xl overflow-hidden transition-all"
               style={{
-                width: "140px",
-                height: "100%",
+                width: "90px",
+                height: "80px",
                 border: isActive ? "2px solid #d4a830" : "1px solid rgba(255,255,255,0.08)",
                 boxShadow: isActive ? "0 0 20px rgba(184,150,12,0.35), 0 0 6px rgba(184,150,12,0.15)" : "none",
               }}
