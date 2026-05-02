@@ -191,21 +191,21 @@ export default function Home() {
             key="step3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex min-h-screen"
+            className="flex h-screen overflow-hidden"
           >
             {/* ── LEFT SIDEBAR ── */}
-            <aside className="w-52 flex-shrink-0 border-r border-amber-500/10 bg-black/60 backdrop-blur flex flex-col">
+            <aside className="w-52 flex-shrink-0 border-r border-amber-500/10 bg-black/60 backdrop-blur flex flex-col h-full">
               <div className="px-4 pt-5 pb-3 border-b border-amber-500/10">
                 <p className="text-[9px] uppercase tracking-widest text-amber-500/60 leading-none">AI Matches</p>
                 <p className="text-[11px] text-white/40 mt-0.5">{analyzeMutation.data.interiorStyle}</p>
               </div>
 
-              <div className="flex-1 overflow-y-auto py-2">
+              <div className="flex-1 flex flex-col min-h-0">
                 {analyzeMutation.data.matches.map((m, idx) => (
                   <button
                     key={m.cabin.id}
                     onClick={() => setActiveMatchIndex(idx)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-all group ${
+                    className={`flex-1 flex items-center gap-2.5 px-3 text-left transition-all group min-h-0 ${
                       idx === activeMatchIndex
                         ? "bg-amber-500/10 border-r-2 border-amber-500"
                         : "hover:bg-white/5 border-r-2 border-transparent"
