@@ -1,0 +1,200 @@
+🌐 DEPLOYMENT REQUIREMENTS
+-----------------------------------
+
+Frontend (Vercel):
+- Setup project structure for Vercel deployment
+- Use environment variables for API URLs
+- Optimize build for production
+- Enable image optimization
+
+Backend (Railway):
+- Create FastAPI app with:
+  - /analyze
+  - /tenant
+  - /usage
+- Include requirements.txt
+- Add CORS middleware
+- Prepare for Railway deployment
+
+Database (Supabase):
+- Define SQL schema
+- Setup tables:
+  - tenants
+  - designs
+  - leads
+  - usage
+- Include sample seed data
+
+-----------------------------------
+🧩 CORE FEATURES
+-----------------------------------
+
+1. MULTI-TENANT SYSTEM
+
+Each tenant has:
+- id
+- name
+- logo
+- brand colors
+- WhatsApp number
+- plan
+- usage limits
+
+-----------------------------------
+2. EMBEDDABLE WIDGET
+
+Script:
+
+<script src="https://yourdomain.com/widget.js" data-tenant="TENANT_ID"></script>
+
+Features:
+- Floating button
+- Opens modal
+- Loads tool UI
+- Fully branded per tenant
+
+-----------------------------------
+3. BRAND CUSTOMIZATION
+
+- Dynamic logo
+- Dynamic colors
+- Button styles
+- Applied across widget UI
+
+-----------------------------------
+4. CABIN DESIGN MANAGEMENT
+
+- Upload images
+- Assign tags
+- Enable/disable designs
+
+-----------------------------------
+5. AI FLOW
+
+- Upload image
+- Send to backend
+- GPT analysis
+- Return structured JSON
+- Map to designs
+- Display interactive viewer
+
+-----------------------------------
+6. FAKE 3D VIEWER
+
+- Use Three.js plane + texture
+- Mouse tilt interaction
+- Light sweep animation
+- Glass overlay
+- Cinematic entry
+
+-----------------------------------
+7. WHATSAPP CTA
+
+Dynamic link:
+
+https://wa.me/<tenant_number>?text=<dynamic_message>
+
+-----------------------------------
+8. USAGE LIMIT SYSTEM
+
+- Track usage per tenant
+- Block when limit reached
+- Show upgrade message
+
+-----------------------------------
+9. DASHBOARD
+
+Route: /dashboard
+
+Features:
+- Authentication (simple email/password)
+- View leads
+- View usage stats
+- Manage branding
+- Manage designs
+- Copy widget code
+
+-----------------------------------
+📊 DATABASE SCHEMA
+-----------------------------------
+
+tenants:
+- id
+- name
+- logo_url
+- primary_color
+- whatsapp_number
+- plan
+- usage_limit
+
+designs:
+- id
+- tenant_id
+- image_url
+- tag
+
+leads:
+- id
+- tenant_id
+- timestamp
+- cabin_name
+- style
+
+usage:
+- tenant_id
+- month
+- requests_count
+
+-----------------------------------
+🔌 API ENDPOINTS
+-----------------------------------
+
+POST /analyze
+GET /tenant/{id}
+POST /lead
+GET /usage/{tenant_id}
+
+-----------------------------------
+🔐 SECURITY
+-----------------------------------
+
+- Validate tenant ID
+- Rate limiting
+- Basic auth for dashboard
+
+-----------------------------------
+⚡ PERFORMANCE
+-----------------------------------
+
+- Lazy load widget
+- Optimize images
+- Cache responses
+
+-----------------------------------
+📦 FILE STRUCTURE
+-----------------------------------
+
+Frontend:
+- /app
+- /components
+- /widget
+
+Backend:
+- main.py
+- routes/
+- services/
+- models/
+
+-----------------------------------
+🚀 DEPLOYMENT STEPS
+-----------------------------------
+
+Provide clear instructions:
+
+1. Deploy backend to Railway
+2. Setup Supabase project
+3. Run SQL schema
+4. Configure environment variables
+5. Deploy frontend to Vercel
+6. Connect frontend to backend
+7. Test widget embed
