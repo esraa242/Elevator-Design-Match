@@ -5,18 +5,29 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AnalysisResult,
+  AnalyzeAndMatchBody,
+  CabinDesign,
+  CreateLeadBody,
+  HealthStatus,
+  Lead,
+  LeadStats,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -92,6 +103,417 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns all pre-stored elevator cabin designs
+ * @summary List all cabin designs
+ */
+export const getListCabinsUrl = () => {
+  return `/api/cabins`;
+};
+
+export const listCabins = async (
+  options?: RequestInit,
+): Promise<CabinDesign[]> => {
+  return customFetch<CabinDesign[]>(getListCabinsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCabinsQueryKey = () => {
+  return [`/api/cabins`] as const;
+};
+
+export const getListCabinsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCabins>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCabins>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCabinsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCabins>>> = ({
+    signal,
+  }) => listCabins({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCabins>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCabinsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCabins>>
+>;
+export type ListCabinsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all cabin designs
+ */
+
+export function useListCabins<
+  TData = Awaited<ReturnType<typeof listCabins>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listCabins>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCabinsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get a specific cabin design
+ */
+export const getGetCabinUrl = (id: number) => {
+  return `/api/cabins/${id}`;
+};
+
+export const getCabin = async (
+  id: number,
+  options?: RequestInit,
+): Promise<CabinDesign> => {
+  return customFetch<CabinDesign>(getGetCabinUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCabinQueryKey = (id: number) => {
+  return [`/api/cabins/${id}`] as const;
+};
+
+export const getGetCabinQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCabin>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCabin>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCabinQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCabin>>> = ({
+    signal,
+  }) => getCabin(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getCabin>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetCabinQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCabin>>
+>;
+export type GetCabinQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a specific cabin design
+ */
+
+export function useGetCabin<
+  TData = Awaited<ReturnType<typeof getCabin>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCabin>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCabinQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Accepts a base64-encoded interior image, uses AI to analyze the style, and returns matched cabin designs ranked by compatibility score
+ * @summary Analyze interior image and match to cabin designs
+ */
+export const getAnalyzeAndMatchUrl = () => {
+  return `/api/analysis/match`;
+};
+
+export const analyzeAndMatch = async (
+  analyzeAndMatchBody: AnalyzeAndMatchBody,
+  options?: RequestInit,
+): Promise<AnalysisResult> => {
+  return customFetch<AnalysisResult>(getAnalyzeAndMatchUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(analyzeAndMatchBody),
+  });
+};
+
+export const getAnalyzeAndMatchMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeAndMatch>>,
+    TError,
+    { data: BodyType<AnalyzeAndMatchBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof analyzeAndMatch>>,
+  TError,
+  { data: BodyType<AnalyzeAndMatchBody> },
+  TContext
+> => {
+  const mutationKey = ["analyzeAndMatch"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof analyzeAndMatch>>,
+    { data: BodyType<AnalyzeAndMatchBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return analyzeAndMatch(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AnalyzeAndMatchMutationResult = NonNullable<
+  Awaited<ReturnType<typeof analyzeAndMatch>>
+>;
+export type AnalyzeAndMatchMutationBody = BodyType<AnalyzeAndMatchBody>;
+export type AnalyzeAndMatchMutationError = ErrorType<void>;
+
+/**
+ * @summary Analyze interior image and match to cabin designs
+ */
+export const useAnalyzeAndMatch = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof analyzeAndMatch>>,
+    TError,
+    { data: BodyType<AnalyzeAndMatchBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof analyzeAndMatch>>,
+  TError,
+  { data: BodyType<AnalyzeAndMatchBody> },
+  TContext
+> => {
+  return useMutation(getAnalyzeAndMatchMutationOptions(options));
+};
+
+/**
+ * Captures user contact information and their matched cabin design for WhatsApp follow-up
+ * @summary Create a lead record
+ */
+export const getCreateLeadUrl = () => {
+  return `/api/leads`;
+};
+
+export const createLead = async (
+  createLeadBody: CreateLeadBody,
+  options?: RequestInit,
+): Promise<Lead> => {
+  return customFetch<Lead>(getCreateLeadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createLeadBody),
+  });
+};
+
+export const getCreateLeadMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<CreateLeadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<CreateLeadBody> },
+  TContext
+> => {
+  const mutationKey = ["createLead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLead>>,
+    { data: BodyType<CreateLeadBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLead(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLead>>
+>;
+export type CreateLeadMutationBody = BodyType<CreateLeadBody>;
+export type CreateLeadMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a lead record
+ */
+export const useCreateLead = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<CreateLeadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<CreateLeadBody> },
+  TContext
+> => {
+  return useMutation(getCreateLeadMutationOptions(options));
+};
+
+/**
+ * Returns aggregated lead data for analytics
+ * @summary Get lead statistics
+ */
+export const getGetLeadStatsUrl = () => {
+  return `/api/leads/stats`;
+};
+
+export const getLeadStats = async (
+  options?: RequestInit,
+): Promise<LeadStats> => {
+  return customFetch<LeadStats>(getGetLeadStatsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLeadStatsQueryKey = () => {
+  return [`/api/leads/stats`] as const;
+};
+
+export const getGetLeadStatsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLeadStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLeadStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLeadStatsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeadStats>>> = ({
+    signal,
+  }) => getLeadStats({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLeadStats>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLeadStatsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLeadStats>>
+>;
+export type GetLeadStatsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get lead statistics
+ */
+
+export function useGetLeadStats<
+  TData = Awaited<ReturnType<typeof getLeadStats>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getLeadStats>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLeadStatsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

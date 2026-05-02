@@ -1,0 +1,38 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "NyV4Y0EMY1i0NH5Fvvt_C"
+uri = "file://artifacts/api-server/public/cabins/modern-luxury.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "s576AZlTrtWYOyH36x1mZ"
+uri = "file://artifacts/api-server/public/cabins/classic-royal.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "D2Pw7YOHModRYbBomcRYk"
+uri = "file://artifacts/api-server/public/cabins/contemporary-minimal.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "TzS7QGMBoKrfVifoLCMHs"
+uri = "file://artifacts/api-server/public/cabins/industrial-chic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "44tbem-MALmMmAbu3QT3u"
+uri = "file://artifacts/api-server/public/cabins/art-deco.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "CihTZWIE6Uc-AA18SOL2j"
+uri = "file://artifacts/api-server/public/cabins/scandinavian.png"
+type = "image"
+title = "generated_image"

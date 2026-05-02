@@ -5,6 +5,88 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface AnalyzeAndMatchBody {
+  /** Base64-encoded image data */
+  imageBase64: string;
+  /** Image MIME type (e.g. image/jpeg, image/png) */
+  mimeType?: string;
+}
+
 export interface HealthStatus {
   status: string;
+}
+
+export interface CabinSpecs {
+  ceiling: string;
+  wallPanels: string;
+  handrail: string;
+  flooring: string;
+  lighting: string;
+  capacity: string;
+  finish: string;
+  warranty: string;
+}
+
+export interface CabinDesign {
+  id: number;
+  /** Name of the cabin design (e.g. "Modern Luxury Cabin") */
+  name: string;
+  /** Design style category (e.g. "Modern Luxury", "Classic", "Contemporary") */
+  style: string;
+  description: string;
+  /** URL to the cabin design image */
+  imageUrl: string;
+  /** URL to a smaller thumbnail image */
+  thumbnailUrl: string;
+  specs: CabinSpecs;
+  /** Style tags for matching (e.g. ["marble", "minimalist", "gold"]) */
+  tags: string[];
+}
+
+export interface CabinMatch {
+  cabin: CabinDesign;
+  /**
+   * Compatibility score from 0-100
+   * @minimum 0
+   * @maximum 100
+   */
+  matchScore: number;
+  /** AI explanation for why this cabin matches the interior */
+  matchReason: string;
+}
+
+export interface AnalysisResult {
+  /** AI-detected interior design style */
+  interiorStyle: string;
+  /** Detected dominant colors in the interior */
+  dominantColors: string[];
+  /** Keywords describing the interior style */
+  styleKeywords: string[];
+  /** Ranked list of matching cabin designs */
+  matches: CabinMatch[];
+}
+
+export interface CreateLeadBody {
+  name: string;
+  /** WhatsApp phone number */
+  phone: string;
+  /** The matched cabin design ID */
+  cabinId: number;
+  matchScore: number;
+}
+
+export interface Lead {
+  id: number;
+  name: string;
+  phone: string;
+  cabinId: number;
+  matchScore: number;
+  createdAt: string;
+}
+
+export interface LeadStats {
+  totalLeads: number;
+  leadsThisWeek: number;
+  topCabin: string;
+  averageMatchScore: number;
 }

@@ -14,3 +14,171 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns all pre-stored elevator cabin designs
+ * @summary List all cabin designs
+ */
+export const ListCabinsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod
+    .string()
+    .describe('Name of the cabin design (e.g. \"Modern Luxury Cabin\")'),
+  style: zod
+    .string()
+    .describe(
+      'Design style category (e.g. \"Modern Luxury\", \"Classic\", \"Contemporary\")',
+    ),
+  description: zod.string(),
+  imageUrl: zod.string().describe("URL to the cabin design image"),
+  thumbnailUrl: zod.string().describe("URL to a smaller thumbnail image"),
+  specs: zod.object({
+    ceiling: zod.string(),
+    wallPanels: zod.string(),
+    handrail: zod.string(),
+    flooring: zod.string(),
+    lighting: zod.string(),
+    capacity: zod.string(),
+    finish: zod.string(),
+    warranty: zod.string(),
+  }),
+  tags: zod
+    .array(zod.string())
+    .describe(
+      'Style tags for matching (e.g. [\"marble\", \"minimalist\", \"gold\"])',
+    ),
+});
+export const ListCabinsResponse = zod.array(ListCabinsResponseItem);
+
+/**
+ * @summary Get a specific cabin design
+ */
+export const GetCabinParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetCabinResponse = zod.object({
+  id: zod.number(),
+  name: zod
+    .string()
+    .describe('Name of the cabin design (e.g. \"Modern Luxury Cabin\")'),
+  style: zod
+    .string()
+    .describe(
+      'Design style category (e.g. \"Modern Luxury\", \"Classic\", \"Contemporary\")',
+    ),
+  description: zod.string(),
+  imageUrl: zod.string().describe("URL to the cabin design image"),
+  thumbnailUrl: zod.string().describe("URL to a smaller thumbnail image"),
+  specs: zod.object({
+    ceiling: zod.string(),
+    wallPanels: zod.string(),
+    handrail: zod.string(),
+    flooring: zod.string(),
+    lighting: zod.string(),
+    capacity: zod.string(),
+    finish: zod.string(),
+    warranty: zod.string(),
+  }),
+  tags: zod
+    .array(zod.string())
+    .describe(
+      'Style tags for matching (e.g. [\"marble\", \"minimalist\", \"gold\"])',
+    ),
+});
+
+/**
+ * Accepts a base64-encoded interior image, uses AI to analyze the style, and returns matched cabin designs ranked by compatibility score
+ * @summary Analyze interior image and match to cabin designs
+ */
+export const analyzeAndMatchBodyMimeTypeDefault = `image/jpeg`;
+
+export const AnalyzeAndMatchBody = zod.object({
+  imageBase64: zod.string().describe("Base64-encoded image data"),
+  mimeType: zod
+    .string()
+    .default(analyzeAndMatchBodyMimeTypeDefault)
+    .describe("Image MIME type (e.g. image\/jpeg, image\/png)"),
+});
+
+export const analyzeAndMatchResponseMatchesItemMatchScoreMin = 0;
+export const analyzeAndMatchResponseMatchesItemMatchScoreMax = 100;
+
+export const AnalyzeAndMatchResponse = zod.object({
+  interiorStyle: zod.string().describe("AI-detected interior design style"),
+  dominantColors: zod
+    .array(zod.string())
+    .describe("Detected dominant colors in the interior"),
+  styleKeywords: zod
+    .array(zod.string())
+    .describe("Keywords describing the interior style"),
+  matches: zod
+    .array(
+      zod.object({
+        cabin: zod.object({
+          id: zod.number(),
+          name: zod
+            .string()
+            .describe(
+              'Name of the cabin design (e.g. \"Modern Luxury Cabin\")',
+            ),
+          style: zod
+            .string()
+            .describe(
+              'Design style category (e.g. \"Modern Luxury\", \"Classic\", \"Contemporary\")',
+            ),
+          description: zod.string(),
+          imageUrl: zod.string().describe("URL to the cabin design image"),
+          thumbnailUrl: zod
+            .string()
+            .describe("URL to a smaller thumbnail image"),
+          specs: zod.object({
+            ceiling: zod.string(),
+            wallPanels: zod.string(),
+            handrail: zod.string(),
+            flooring: zod.string(),
+            lighting: zod.string(),
+            capacity: zod.string(),
+            finish: zod.string(),
+            warranty: zod.string(),
+          }),
+          tags: zod
+            .array(zod.string())
+            .describe(
+              'Style tags for matching (e.g. [\"marble\", \"minimalist\", \"gold\"])',
+            ),
+        }),
+        matchScore: zod
+          .number()
+          .min(analyzeAndMatchResponseMatchesItemMatchScoreMin)
+          .max(analyzeAndMatchResponseMatchesItemMatchScoreMax)
+          .describe("Compatibility score from 0-100"),
+        matchReason: zod
+          .string()
+          .describe("AI explanation for why this cabin matches the interior"),
+      }),
+    )
+    .describe("Ranked list of matching cabin designs"),
+});
+
+/**
+ * Captures user contact information and their matched cabin design for WhatsApp follow-up
+ * @summary Create a lead record
+ */
+export const CreateLeadBody = zod.object({
+  name: zod.string(),
+  phone: zod.string().describe("WhatsApp phone number"),
+  cabinId: zod.number().describe("The matched cabin design ID"),
+  matchScore: zod.number(),
+});
+
+/**
+ * Returns aggregated lead data for analytics
+ * @summary Get lead statistics
+ */
+export const GetLeadStatsResponse = zod.object({
+  totalLeads: zod.number(),
+  leadsThisWeek: zod.number(),
+  topCabin: zod.string(),
+  averageMatchScore: zod.number(),
+});

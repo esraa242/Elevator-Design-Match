@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: cabins
+    description: Elevator cabin design operations
+  - name: analysis
+    description: AI interior analysis and matching
+  - name: leads
+    description: Lead capture operations
 paths:
   /healthz:
     get:
@@ -24,8 +30,117 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /cabins:
+    get:
+      operationId: listCabins
+      tags: [cabins]
+      summary: List all cabin designs
+      description: Returns all pre-stored elevator cabin designs
+      responses:
+        "200":
+          description: List of cabin designs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CabinDesign"
+
+  /cabins/{id}:
+    get:
+      operationId: getCabin
+      tags: [cabins]
+      summary: Get a specific cabin design
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cabin design details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CabinDesign"
+        "404":
+          description: Cabin not found
+
+  /analysis/match:
+    post:
+      operationId: analyzeAndMatch
+      tags: [analysis]
+      summary: Analyze interior image and match to cabin designs
+      description: Accepts a base64-encoded interior image, uses AI to analyze the style, and returns matched cabin designs ranked by compatibility score
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeAndMatchBody"
+      responses:
+        "200":
+          description: Analysis results with matched cabin designs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResult"
+        "400":
+          description: Invalid image or analysis failed
+
+  /leads:
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Create a lead record
+      description: Captures user contact information and their matched cabin design for WhatsApp follow-up
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "201":
+          description: Lead created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "400":
+          description: Validation error
+
+  /leads/stats:
+    get:
+      operationId: getLeadStats
+      tags: [leads]
+      summary: Get lead statistics
+      description: Returns aggregated lead data for analytics
+      responses:
+        "200":
+          description: Lead statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadStats"
+
 components:
   schemas:
+    AnalyzeAndMatchBody:
+      type: object
+      properties:
+        imageBase64:
+          type: string
+          description: Base64-encoded image data
+        mimeType:
+          type: string
+          description: Image MIME type (e.g. image/jpeg, image/png)
+          default: image/jpeg
+      required:
+        - imageBase64
+
     HealthStatus:
       type: object
       properties:
@@ -34,3 +149,172 @@ components:
       required:
         - status
 
+    CabinDesign:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: Name of the cabin design (e.g. "Modern Luxury Cabin")
+        style:
+          type: string
+          description: Design style category (e.g. "Modern Luxury", "Classic", "Contemporary")
+        description:
+          type: string
+        imageUrl:
+          type: string
+          description: URL to the cabin design image
+        thumbnailUrl:
+          type: string
+          description: URL to a smaller thumbnail image
+        specs:
+          $ref: "#/components/schemas/CabinSpecs"
+        tags:
+          type: array
+          items:
+            type: string
+          description: Style tags for matching (e.g. ["marble", "minimalist", "gold"])
+      required:
+        - id
+        - name
+        - style
+        - description
+        - imageUrl
+        - thumbnailUrl
+        - specs
+        - tags
+
+    CabinSpecs:
+      type: object
+      properties:
+        ceiling:
+          type: string
+        wallPanels:
+          type: string
+        handrail:
+          type: string
+        flooring:
+          type: string
+        lighting:
+          type: string
+        capacity:
+          type: string
+        finish:
+          type: string
+        warranty:
+          type: string
+      required:
+        - ceiling
+        - wallPanels
+        - handrail
+        - flooring
+        - lighting
+        - capacity
+        - finish
+        - warranty
+
+    AnalysisResult:
+      type: object
+      properties:
+        interiorStyle:
+          type: string
+          description: AI-detected interior design style
+        dominantColors:
+          type: array
+          items:
+            type: string
+          description: Detected dominant colors in the interior
+        styleKeywords:
+          type: array
+          items:
+            type: string
+          description: Keywords describing the interior style
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/CabinMatch"
+          description: Ranked list of matching cabin designs
+      required:
+        - interiorStyle
+        - dominantColors
+        - styleKeywords
+        - matches
+
+    CabinMatch:
+      type: object
+      properties:
+        cabin:
+          $ref: "#/components/schemas/CabinDesign"
+        matchScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Compatibility score from 0-100
+        matchReason:
+          type: string
+          description: AI explanation for why this cabin matches the interior
+      required:
+        - cabin
+        - matchScore
+        - matchReason
+
+    CreateLeadBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+          description: WhatsApp phone number
+        cabinId:
+          type: integer
+          description: The matched cabin design ID
+        matchScore:
+          type: integer
+      required:
+        - name
+        - phone
+        - cabinId
+        - matchScore
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        phone:
+          type: string
+        cabinId:
+          type: integer
+        matchScore:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - phone
+        - cabinId
+        - matchScore
+        - createdAt
+
+    LeadStats:
+      type: object
+      properties:
+        totalLeads:
+          type: integer
+        leadsThisWeek:
+          type: integer
+        topCabin:
+          type: string
+        averageMatchScore:
+          type: number
+      required:
+        - totalLeads
+        - leadsThisWeek
+        - topCabin
+        - averageMatchScore
