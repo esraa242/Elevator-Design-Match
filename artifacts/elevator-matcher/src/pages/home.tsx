@@ -1,12 +1,13 @@
 import React, { useState, useRef } from "react";
 import { useAnalyzeAndMatch, useCreateLead } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { UploadCloud, CheckCircle, Sparkles, Layers, Maximize2, Lightbulb, Smartphone, Box } from "lucide-react";
+import { UploadCloud, CheckCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CabinViewer3D } from "@/components/CabinViewer3D";
+import { CabinMatchCard } from "@/components/CabinMatchCard";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -17,38 +18,12 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const CircularProgress = ({ value, label }: { value: number, label: string }) => {
-  return (
-    <div className="relative w-32 h-32 flex items-center justify-center">
-      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8" className="text-secondary" />
-        <motion.circle
-          cx="50"
-          cy="50"
-          r="45"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          strokeDasharray="283"
-          initial={{ strokeDashoffset: 283 }}
-          animate={{ strokeDashoffset: 283 - (283 * value) / 100 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className="text-primary"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-3xl font-serif text-primary font-bold">{value}%</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</span>
-      </div>
-    </div>
-  );
-};
-
 export default function Home() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const analyzeMutation = useAnalyzeAndMatch();
@@ -63,10 +38,19 @@ export default function Home() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      const b64 = await fileToBase64(file);
-      setImageBase64(b64);
+      setImagePreview(URL.createObjectURL(file));
+      setImageBase64(await fileToBase64(file));
+      setMimeType(file.type);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      setImagePreview(URL.createObjectURL(file));
+      setImageBase64(await fileToBase64(file));
       setMimeType(file.type);
     }
   };
@@ -79,25 +63,20 @@ export default function Home() {
       setStep(3);
     } catch (e) {
       console.error(e);
-      setStep(1); // fallback
+      setStep(1);
     }
   };
 
   const handleLeadSubmit = async () => {
     if (!leadName || !leadPhone || !analyzeMutation.data) return;
     const match = analyzeMutation.data.matches[activeMatchIndex];
-    
     try {
       await createLeadMutation.mutateAsync({
-        data: {
-          name: leadName,
-          phone: leadPhone,
-          cabinId: match.cabin.id,
-          matchScore: match.matchScore
-        }
+        data: { name: leadName, phone: leadPhone, cabinId: match.cabin.id, matchScore: match.matchScore }
       });
-      
-      const message = encodeURIComponent(`Hi! I used your elevator matcher tool and got a ${match.cabin.name} match with ${match.matchScore}% compatibility. I'd like to learn more.`);
+      const message = encodeURIComponent(
+        `Hi! I used your elevator matcher and got a ${match.cabin.name} match with ${match.matchScore}% compatibility. I'd like a quote.`
+      );
       window.open(`https://wa.me/971501234567?text=${message}`, '_blank');
       setShowLeadModal(false);
     } catch (e) {
@@ -105,31 +84,40 @@ export default function Home() {
     }
   };
 
+  const activeMatch = analyzeMutation.data?.matches[activeMatchIndex];
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30">
       <AnimatePresence mode="wait">
-        
+
+        {/* ── STEP 1: Upload ── */}
         {step === 1 && (
-          <motion.div 
+          <motion.div
             key="step1"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: -20 }}
             className="max-w-4xl mx-auto px-6 py-20 flex flex-col items-center justify-center min-h-screen text-center"
           >
-            <div className="mb-12 space-y-4">
+            <div className="mb-10 space-y-4">
               <h4 className="text-primary tracking-[0.2em] text-sm uppercase font-semibold">Ascend Elevators</h4>
               <h1 className="text-5xl md:text-7xl font-serif font-medium tracking-tight text-foreground">
                 Discover Your Perfect Cabin
               </h1>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Upload a photo of your interior space. Our AI will analyze your style and match you with the ideal luxury elevator design from our collection.
+                Upload a photo of your interior space. Our AI will analyze your style and match you with the ideal luxury elevator design.
               </p>
             </div>
 
-            <div 
-              className="w-full max-w-xl aspect-video border-2 border-dashed border-secondary hover:border-primary/50 transition-colors rounded-xl overflow-hidden bg-card/50 flex flex-col items-center justify-center cursor-pointer relative group"
+            {/* Drop zone */}
+            <div
+              className={`w-full max-w-xl aspect-video border-2 border-dashed rounded-2xl overflow-hidden bg-card/50 flex flex-col items-center justify-center cursor-pointer relative group transition-all ${
+                dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-secondary hover:border-primary/50"
+              }`}
               onClick={() => fileInputRef.current?.click()}
+              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
             >
               <input type="file" className="hidden" ref={fileInputRef} accept="image/*" onChange={handleFileChange} />
               {imagePreview ? (
@@ -144,13 +132,21 @@ export default function Home() {
                   <div className="w-16 h-16 rounded-full bg-secondary/50 flex items-center justify-center">
                     <UploadCloud className="w-8 h-8" />
                   </div>
-                  <p>Drag and drop or click to upload interior photo</p>
+                  <div>
+                    <p className="font-medium">Drop your interior photo here</p>
+                    <p className="text-sm mt-1 text-muted-foreground/70">or click to browse — JPG, PNG, WebP</p>
+                  </div>
                 </div>
               )}
             </div>
 
-            <div className="mt-12">
-              <Button size="lg" onClick={handleAnalyze} disabled={!imageBase64} className="bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 text-lg rounded-full">
+            <div className="mt-10">
+              <Button
+                size="lg"
+                onClick={handleAnalyze}
+                disabled={!imageBase64}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg rounded-full shadow-[0_0_40px_rgba(184,150,12,0.3)]"
+              >
                 Analyze My Interior <Sparkles className="ml-2 w-5 h-5" />
               </Button>
             </div>
@@ -163,154 +159,100 @@ export default function Home() {
           </motion.div>
         )}
 
+        {/* ── STEP 2: Analyzing ── */}
         {step === 2 && (
           <motion.div
             key="step2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center min-h-screen text-center"
+            className="flex flex-col items-center justify-center min-h-screen text-center px-6"
           >
             <div className="relative w-48 h-48 mb-8">
-              {imagePreview && <img src={imagePreview} className="w-full h-full object-cover rounded-full opacity-30 animate-pulse-slow" />}
-              <div className="absolute inset-0 border-t-2 border-primary rounded-full animate-spin duration-1000"></div>
-              <Sparkles className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary w-12 h-12" />
+              {imagePreview && (
+                <img src={imagePreview} className="w-full h-full object-cover rounded-full opacity-20 animate-pulse" alt="" />
+              )}
+              <div className="absolute inset-0 border-t-2 border-primary rounded-full animate-spin" style={{ animationDuration: "1.2s" }} />
+              <div className="absolute inset-2 border-t border-primary/30 rounded-full animate-spin" style={{ animationDuration: "2s", animationDirection: "reverse" }} />
+              <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary w-12 h-12" />
             </div>
-            <h2 className="text-2xl font-serif text-foreground mb-4">Curating Your Match</h2>
-            <div className="text-muted-foreground space-y-2 h-20">
-              <p className="animate-pulse">Analyzing architectural style...</p>
-              <p className="animate-pulse delay-150">Extracting dominant color palettes...</p>
-              <p className="animate-pulse delay-300">Searching luxury collections...</p>
+            <h2 className="text-3xl font-serif text-foreground mb-4">Curating Your Match</h2>
+            <div className="text-muted-foreground space-y-2">
+              {["Analyzing architectural style...", "Extracting dominant color palettes...", "Searching luxury collections..."].map((t, i) => (
+                <p key={i} className="animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>{t}</p>
+              ))}
             </div>
           </motion.div>
         )}
 
-        {step === 3 && analyzeMutation.data && (
-          <motion.div
-            key="step3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="min-h-screen p-6 lg:p-12 relative flex flex-col lg:flex-row gap-8 lg:gap-16"
-          >
-            {/* Background Glow */}
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-            
-            {/* Left: Cabin Image */}
-            <div className="w-full lg:w-1/2 relative min-h-[60vh] lg:min-h-0 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <img src={analyzeMutation.data.matches[activeMatchIndex].cabin.imageUrl} className="absolute inset-0 w-full h-full object-cover" alt="Cabin" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/40" />
-              
-              {/* Badges */}
-              <div className="absolute top-6 left-6 flex flex-col gap-3">
-                <div className="flex items-center gap-2 bg-primary/20 backdrop-blur-md border border-primary/50 text-primary px-4 py-2 rounded-full text-sm font-medium tracking-wide uppercase">
-                  <Sparkles className="w-4 h-4" /> AI Matched Design
-                </div>
+        {/* ── STEP 3: Result card ── */}
+        {step === 3 && analyzeMutation.data && activeMatch && (
+          <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {/* Alternative matches strip */}
+            {analyzeMutation.data.matches.length > 1 && (
+              <div className="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                {analyzeMutation.data.matches.map((m, idx) => (
+                  <button
+                    key={m.cabin.id}
+                    onClick={() => setActiveMatchIndex(idx)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border transition-all ${
+                      idx === activeMatchIndex
+                        ? "bg-amber-500/20 border-amber-500/60 text-amber-400"
+                        : "bg-black/50 border-white/10 text-white/50 hover:border-white/30"
+                    }`}
+                  >
+                    <span className="font-bold">{m.matchScore}%</span>
+                    <span className="hidden sm:inline truncate max-w-[80px]">{m.cabin.name}</span>
+                  </button>
+                ))}
                 <button
-                  onClick={() => setShow3DViewer(true)}
-                  className="flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/20 hover:border-primary/60 text-white hover:text-primary px-4 py-2 rounded-full text-sm font-medium tracking-wide uppercase transition-all group"
+                  onClick={() => { setStep(1); setImagePreview(null); setImageBase64(null); analyzeMutation.reset(); }}
+                  className="px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border bg-black/50 border-white/10 text-white/50 hover:border-white/30 transition-all"
                 >
-                  <Box className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  View in 3D
+                  ↩ New Photo
                 </button>
               </div>
+            )}
 
-              <div className="absolute top-6 right-6">
-                <CircularProgress value={analyzeMutation.data.matches[activeMatchIndex].matchScore} label="Match Score" />
-              </div>
+            {analyzeMutation.data.matches.length <= 1 && (
+              <button
+                onClick={() => { setStep(1); setImagePreview(null); setImageBase64(null); analyzeMutation.reset(); }}
+                className="fixed top-4 right-4 z-30 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border bg-black/50 border-white/10 text-white/50 hover:border-white/30 transition-all"
+              >
+                ↩ New Photo
+              </button>
+            )}
 
-              {/* Title & Desc */}
-              <div className="absolute bottom-0 left-0 p-8 w-full">
-                <h2 className="text-4xl md:text-5xl font-serif text-white mb-2">{analyzeMutation.data.matches[activeMatchIndex].cabin.name}</h2>
-                <p className="text-gray-300 max-w-lg mb-6">{analyzeMutation.data.matches[activeMatchIndex].cabin.description}</p>
-                
-                {/* Stats Bar */}
-                <div className="flex flex-wrap gap-4 text-xs font-mono uppercase tracking-wider text-gray-400 pt-6 border-t border-white/10">
-                   <div className="flex items-center gap-2"><Layers className="w-4 h-4 text-primary" /> {analyzeMutation.data.matches[activeMatchIndex].cabin.specs.style || 'Custom'}</div>
-                   <div className="flex items-center gap-2"><Lightbulb className="w-4 h-4 text-primary" /> {analyzeMutation.data.matches[activeMatchIndex].cabin.specs.lighting}</div>
-                   <div className="flex items-center gap-2"><Maximize2 className="w-4 h-4 text-primary" /> {analyzeMutation.data.matches[activeMatchIndex].cabin.specs.capacity}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Details & CTA */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-12 py-8">
-              
-              <div>
-                <h3 className="text-sm font-semibold text-primary uppercase tracking-widest mb-6">Material Specifications</h3>
-                <div className="space-y-6">
-                  {['ceiling', 'wallPanels', 'handrail', 'flooring'].map((specKey) => {
-                    const cabin = analyzeMutation.data!.matches[activeMatchIndex].cabin;
-                    const val = cabin.specs[specKey as keyof typeof cabin.specs];
-                    if(!val) return null;
-                    return (
-                      <div key={specKey} className="flex items-start gap-4 pb-6 border-b border-border/50">
-                        <div className="w-2 h-2 rounded-full bg-primary mt-2" />
-                        <div>
-                          <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{specKey.replace(/([A-Z])/g, ' $1').trim()}</div>
-                          <div className="text-lg text-foreground">{val}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <Button 
-                  onClick={() => setShowLeadModal(true)} 
-                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white h-16 text-lg rounded-xl font-medium shadow-[0_0_40px_rgba(37,211,102,0.3)] transition-all hover:shadow-[0_0_60px_rgba(37,211,102,0.4)]"
-                >
-                  <Smartphone className="mr-2 w-6 h-6" />
-                  Get Your Quote on WhatsApp
-                </Button>
-                <p className="text-center text-sm text-muted-foreground mt-4">No commitment • Instant response</p>
-              </div>
-
-              {analyzeMutation.data.matches.length > 1 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-4">Alternative Matches</h3>
-                  <div className="flex gap-4 overflow-x-auto pb-4">
-                    {analyzeMutation.data.matches.map((match, idx) => {
-                      if(idx === activeMatchIndex) return null;
-                      return (
-                        <div 
-                          key={match.cabin.id} 
-                          onClick={() => setActiveMatchIndex(idx)}
-                          className="min-w-[160px] cursor-pointer group"
-                        >
-                          <div className="relative aspect-video rounded-lg overflow-hidden border border-border group-hover:border-primary/50 transition-colors">
-                            <img src={match.cabin.thumbnailUrl || match.cabin.imageUrl} className="w-full h-full object-cover" />
-                            <div className="absolute top-2 left-2 bg-black/70 backdrop-blur text-primary text-xs font-bold px-2 py-1 rounded">{match.matchScore}%</div>
-                          </div>
-                          <div className="mt-2 text-sm text-foreground truncate">{match.cabin.name}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-            </div>
+            <CabinMatchCard
+              cabin={activeMatch.cabin as Parameters<typeof CabinMatchCard>[0]["cabin"]}
+              matchScore={activeMatch.matchScore}
+              analysis={`${analyzeMutation.data.interiorStyle} · ${analyzeMutation.data.styleKeywords.slice(0, 3).join(", ")}`}
+              onWhatsApp={() => setShowLeadModal(true)}
+              on3D={() => setShow3DViewer(true)}
+            />
           </motion.div>
         )}
 
       </AnimatePresence>
 
-      {show3DViewer && analyzeMutation.data && (
+      {/* ── 3D Viewer modal ── */}
+      {show3DViewer && activeMatch && (
         <CabinViewer3D
-          imageUrl={analyzeMutation.data.matches[activeMatchIndex].cabin.imageUrl}
-          cabinName={analyzeMutation.data.matches[activeMatchIndex].cabin.name}
-          matchScore={analyzeMutation.data.matches[activeMatchIndex].matchScore}
+          imageUrl={activeMatch.cabin.imageUrl}
+          cabinName={activeMatch.cabin.name}
+          matchScore={activeMatch.matchScore}
           onClose={() => setShow3DViewer(false)}
         />
       )}
 
+      {/* ── Lead capture modal ── */}
       <Dialog open={showLeadModal} onOpenChange={setShowLeadModal}>
         <DialogContent className="sm:max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-2xl font-serif">Get Your Custom Quote</DialogTitle>
             <DialogDescription>
-              Enter your details to receive pricing for the <strong className="text-foreground">{analyzeMutation.data?.matches[activeMatchIndex]?.cabin.name}</strong> directly on WhatsApp.
+              Enter your details to receive pricing for the{" "}
+              <strong className="text-foreground">{activeMatch?.cabin.name}</strong> on WhatsApp.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -323,8 +265,8 @@ export default function Home() {
               <Input id="phone" placeholder="+971 50 123 4567" value={leadPhone} onChange={e => setLeadPhone(e.target.value)} className="bg-background border-border" />
             </div>
           </div>
-          <Button 
-            onClick={handleLeadSubmit} 
+          <Button
+            onClick={handleLeadSubmit}
             disabled={!leadName || !leadPhone || createLeadMutation.isPending}
             className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white"
           >
