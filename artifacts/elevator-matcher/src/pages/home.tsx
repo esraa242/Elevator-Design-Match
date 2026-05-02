@@ -185,45 +185,70 @@ export default function Home() {
           </motion.div>
         )}
 
-        {/* ── STEP 3: Result card ── */}
+        {/* ── STEP 3: Sidebar + card ── */}
         {step === 3 && analyzeMutation.data && activeMatch && (
-          <motion.div key="step3" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {/* Alternative matches strip */}
-            {analyzeMutation.data.matches.length > 1 && (
-              <div className="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex min-h-screen"
+          >
+            {/* ── LEFT SIDEBAR ── */}
+            <aside className="w-52 flex-shrink-0 border-r border-amber-500/10 bg-black/60 backdrop-blur flex flex-col">
+              <div className="px-4 pt-5 pb-3 border-b border-amber-500/10">
+                <p className="text-[9px] uppercase tracking-widest text-amber-500/60 leading-none">AI Matches</p>
+                <p className="text-[11px] text-white/40 mt-0.5">{analyzeMutation.data.interiorStyle}</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto py-2">
                 {analyzeMutation.data.matches.map((m, idx) => (
                   <button
                     key={m.cabin.id}
                     onClick={() => setActiveMatchIndex(idx)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border transition-all ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-all group ${
                       idx === activeMatchIndex
-                        ? "bg-amber-500/20 border-amber-500/60 text-amber-400"
-                        : "bg-black/50 border-white/10 text-white/50 hover:border-white/30"
+                        ? "bg-amber-500/10 border-r-2 border-amber-500"
+                        : "hover:bg-white/5 border-r-2 border-transparent"
                     }`}
                   >
-                    <span className="font-bold">{m.matchScore}%</span>
-                    <span className="hidden sm:inline truncate max-w-[80px]">{m.cabin.name}</span>
+                    {/* Thumbnail */}
+                    <div className="w-9 h-9 rounded-md overflow-hidden flex-shrink-0 border border-white/10">
+                      <img
+                        src={m.cabin.imageUrl}
+                        className="w-full h-full object-cover"
+                        alt=""
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[10px] font-semibold truncate leading-tight ${idx === activeMatchIndex ? "text-amber-400" : "text-white/70"}`}>
+                        {m.cabin.name}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-amber-500"
+                            style={{ width: `${m.matchScore}%` }}
+                          />
+                        </div>
+                        <span className="text-[9px] text-amber-400 font-bold flex-shrink-0">{m.matchScore}%</span>
+                      </div>
+                    </div>
                   </button>
                 ))}
+              </div>
+
+              <div className="p-3 border-t border-amber-500/10">
                 <button
                   onClick={() => { setStep(1); setImagePreview(null); setImageBase64(null); analyzeMutation.reset(); }}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border bg-black/50 border-white/10 text-white/50 hover:border-white/30 transition-all"
+                  className="w-full text-[10px] text-white/40 hover:text-white/70 transition-colors py-1.5 flex items-center justify-center gap-1.5"
                 >
-                  ↩ New Photo
+                  <span>↩</span> New Photo
                 </button>
               </div>
-            )}
+            </aside>
 
-            {analyzeMutation.data.matches.length <= 1 && (
-              <button
-                onClick={() => { setStep(1); setImagePreview(null); setImageBase64(null); analyzeMutation.reset(); }}
-                className="fixed top-4 right-4 z-30 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-md border bg-black/50 border-white/10 text-white/50 hover:border-white/30 transition-all"
-              >
-                ↩ New Photo
-              </button>
-            )}
-
-            <div className="min-h-screen flex items-start justify-center p-6 pt-16">
+            {/* ── MAIN: card ── */}
+            <div className="flex-1 overflow-y-auto flex items-start justify-center p-6">
               <CabinMatchCard
                 cabin={activeMatch.cabin as Parameters<typeof CabinMatchCard>[0]["cabin"]}
                 matchScore={activeMatch.matchScore}
