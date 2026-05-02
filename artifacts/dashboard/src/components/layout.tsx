@@ -6,12 +6,12 @@ import {
 } from "lucide-react";
 
 const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Overview" },
-  { href: "/dashboard/leads", icon: Users, label: "Leads" },
-  { href: "/dashboard/usage", icon: BarChart2, label: "Usage & Stats" },
-  { href: "/dashboard/cabins", icon: Package, label: "Cabin Designs" },
-  { href: "/dashboard/branding", icon: Palette, label: "Branding" },
-  { href: "/dashboard/widget", icon: Code2, label: "Widget Embed" },
+  { href: "/", icon: LayoutDashboard, label: "Overview" },
+  { href: "/leads", icon: Users, label: "Leads" },
+  { href: "/usage", icon: BarChart2, label: "Usage & Stats" },
+  { href: "/cabins", icon: Package, label: "Cabin Designs" },
+  { href: "/branding", icon: Palette, label: "Branding" },
+  { href: "/widget", icon: Code2, label: "Widget Embed" },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -42,7 +42,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
         <nav className="flex-1 p-4 space-y-1">
           {NAV.map(({ href, icon: Icon, label }) => {
-            const isActive = location === href || (href !== "/dashboard" && location.startsWith(href));
+            const isActive = href === "/" ? location === "/" : location === href || location.startsWith(href + "/");
             return (
               <Link key={href} href={href}>
                 <a className={`sidebar-link ${isActive ? "active" : ""}`}>

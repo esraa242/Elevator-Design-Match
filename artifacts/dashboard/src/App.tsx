@@ -22,32 +22,30 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
       <div className="w-10 h-10 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
     </div>
   );
-  if (!tenant) return <Redirect to="/dashboard/login" />;
+  if (!tenant) return <Redirect to="/login" />;
   return <DashboardLayout><Component /></DashboardLayout>;
 }
 
 function Router() {
-  const { tenant, isLoading } = useAuth();
-
   return (
     <Switch>
-      <Route path="/dashboard/login" component={Login} />
-      <Route path="/dashboard">
+      <Route path="/login" component={Login} />
+      <Route path="/">
         {() => <ProtectedRoute component={Overview} />}
       </Route>
-      <Route path="/dashboard/leads">
+      <Route path="/leads">
         {() => <ProtectedRoute component={Leads} />}
       </Route>
-      <Route path="/dashboard/usage">
+      <Route path="/usage">
         {() => <ProtectedRoute component={Usage} />}
       </Route>
-      <Route path="/dashboard/cabins">
+      <Route path="/cabins">
         {() => <ProtectedRoute component={Cabins} />}
       </Route>
-      <Route path="/dashboard/branding">
+      <Route path="/branding">
         {() => <ProtectedRoute component={Branding} />}
       </Route>
-      <Route path="/dashboard/widget">
+      <Route path="/widget">
         {() => <ProtectedRoute component={WidgetEmbed} />}
       </Route>
       <Route component={NotFound} />

@@ -151,8 +151,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-declare module "react" {
-  interface HTMLAttributes<T> {
-    class?: string;
-  }
-}
