@@ -25,32 +25,22 @@ interface Cabin {
 interface CabinMatchCardProps {
   cabin: Cabin;
   matchScore: number;
-  /** e.g. "Modern Luxury · marble, gold, minimal" */
   analysis?: string;
   onWhatsApp: () => void;
   on3D: () => void;
 }
 
-const WA_ICON = (
-  <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current flex-shrink-0">
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-  </svg>
-);
-
 /* ── Score gauge ── */
-function ScoreGauge({ value, size = 80 }: { value: number; size?: number }) {
+function ScoreGauge({ value }: { value: number }) {
   const r = 36;
   const circ = 2 * Math.PI * r;
   return (
-    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+    <div className="relative w-20 h-20 flex-shrink-0">
       <svg className="w-full h-full -rotate-90" viewBox="0 0 88 88">
-        <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(184,150,12,0.15)" strokeWidth="5" />
+        <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(184,150,12,0.18)" strokeWidth="5" />
         <motion.circle
           cx="44" cy="44" r={r}
-          fill="none"
-          stroke="url(#sg)"
-          strokeWidth="5"
-          strokeLinecap="round"
+          fill="none" stroke="url(#sg)" strokeWidth="5" strokeLinecap="round"
           strokeDasharray={circ}
           initial={{ strokeDashoffset: circ }}
           animate={{ strokeDashoffset: circ - (circ * value) / 100 }}
@@ -71,27 +61,27 @@ function ScoreGauge({ value, size = 80 }: { value: number; size?: number }) {
   );
 }
 
-/* ── Spec callout line (overlaid on the right side of the image) ── */
+/* ── Spec callout line ── */
 function SpecLine({ label, value, delay, topPct }: { label: string; value: string; delay: number; topPct: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, x: 12 }}
+      initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay, duration: 0.45 }}
+      transition={{ delay, duration: 0.4 }}
       className="absolute right-0 flex items-center"
       style={{ top: `${topPct}%`, transform: "translateY(-50%)" }}
     >
-      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_2px_rgba(251,191,36,0.45)] flex-shrink-0" />
+      <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_4px_2px_rgba(251,191,36,0.4)] flex-shrink-0" />
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
-        transition={{ delay: delay + 0.08, duration: 0.35 }}
-        className="w-5 h-px bg-amber-400/70 origin-left flex-shrink-0"
+        transition={{ delay: delay + 0.08, duration: 0.3 }}
+        className="w-4 h-px bg-amber-400/70 origin-left flex-shrink-0"
       />
-      <div className="w-4 h-4 bg-black/75 border border-amber-500/35 flex-shrink-0 flex items-center justify-center">
+      <div className="w-4 h-4 bg-black/80 border border-amber-500/35 flex-shrink-0 flex items-center justify-center">
         <div className="w-2 h-2 border border-amber-500/50" />
       </div>
-      <div className="ml-1.5 min-w-[90px]">
+      <div className="ml-1.5" style={{ minWidth: 100 }}>
         <p className="text-[8px] font-bold uppercase tracking-widest text-amber-400 leading-none">{label}</p>
         <p className="text-[9px] text-white/75 leading-tight mt-0.5">{value}</p>
       </div>
@@ -99,40 +89,32 @@ function SpecLine({ label, value, delay, topPct }: { label: string; value: strin
   );
 }
 
-/* ── Golden rays (clipped to card) ── */
+/* ── Golden rays ── */
 function GoldenRays() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-t-2xl">
-      {Array.from({ length: 16 }).map((_, i) => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {Array.from({ length: 14 }).map((_, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 0.10, 0.04] }}
-          transition={{ delay: 0.2 + i * 0.05, duration: 1.4, repeat: Infinity, repeatType: "reverse", repeatDelay: 1.5 + i * 0.25 }}
+          animate={{ opacity: [0, 0.08, 0.03] }}
+          transition={{ delay: 0.2 + i * 0.06, duration: 1.6, repeat: Infinity, repeatType: "reverse", repeatDelay: 2 + i * 0.2 }}
           className="absolute"
           style={{
-            bottom: "20%",
-            left: "50%",
-            width: "1.5px",
-            height: "80%",
-            background: "linear-gradient(to top, rgba(184,150,12,0.6), transparent)",
+            bottom: "10%", left: "50%",
+            width: "1.5px", height: "90%",
+            background: "linear-gradient(to top, rgba(184,150,12,0.55), transparent)",
             transformOrigin: "bottom center",
-            transform: `translateX(-50%) rotate(${(i - 8) * 11}deg)`,
+            transform: `translateX(-50%) rotate(${(i - 7) * 12}deg)`,
           }}
         />
       ))}
-      <div
-        className="absolute"
-        style={{
-          bottom: "15%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: "260px",
-          height: "260px",
-          background: "radial-gradient(ellipse, rgba(184,150,12,0.14) 0%, rgba(184,150,12,0.04) 50%, transparent 70%)",
-          borderRadius: "50%",
-        }}
-      />
+      <div className="absolute" style={{
+        bottom: "5%", left: "50%", transform: "translateX(-50%)",
+        width: "300px", height: "300px",
+        background: "radial-gradient(ellipse, rgba(184,150,12,0.12) 0%, transparent 70%)",
+        borderRadius: "50%",
+      }} />
     </div>
   );
 }
@@ -143,9 +125,9 @@ export function CabinMatchCard({ cabin, matchScore, analysis, onWhatsApp, on3D }
 
   const specLines = [
     { label: "Ceiling",     value: specs.ceiling,    topPct: 20 },
-    { label: "Wall Panels", value: specs.wallPanels,  topPct: 40 },
-    { label: "Handrail",    value: specs.handrail,    topPct: 60 },
-    { label: "Flooring",    value: specs.flooring,    topPct: 78 },
+    { label: "Wall Panels", value: specs.wallPanels,  topPct: 42 },
+    { label: "Handrail",    value: specs.handrail,    topPct: 62 },
+    { label: "Flooring",    value: specs.flooring,    topPct: 80 },
   ].filter(s => s.value);
 
   const statItems = [
@@ -158,137 +140,138 @@ export function CabinMatchCard({ cabin, matchScore, analysis, onWhatsApp, on3D }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55 }}
-      className="w-full max-w-lg h-full flex flex-col rounded-2xl overflow-hidden border border-amber-500/15 shadow-[0_0_60px_rgba(184,150,12,0.12)]"
-      style={{ background: "#070504" }}
+      transition={{ duration: 0.5 }}
+      className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-amber-500/15 shadow-[0_0_50px_rgba(184,150,12,0.1)]"
+      style={{ background: "#060404" }}
     >
-      {/* ── IMAGE ZONE — fills all remaining height ── */}
-      <div className="relative flex-1 min-h-0">
+      {/* ══ IMAGE ZONE (takes all remaining height) ══ */}
+      <div className="relative flex-1 min-h-0" style={{ background: "#0a0706" }}>
         <GoldenRays />
 
-        {/* Cabin photo */}
+        {/* Cabin photo — object-contain so full cabin is always visible */}
         <motion.img
           src={cabin.imageUrl}
           alt={cabin.name}
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.9 }}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ objectPosition: "center top" }}
+          className="absolute inset-0 w-full h-full"
+          style={{ objectFit: "contain", objectPosition: "center center" }}
         />
 
-        {/* Vignettes */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40" />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/70 via-transparent to-transparent" />
+        {/* Subtle bottom fade into the info strip */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
         {/* TOP-LEFT: AI badge */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/55 backdrop-blur border border-amber-500/40 px-2.5 py-1.5 rounded-lg z-10"
+          className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur border border-amber-500/40 px-2.5 py-1.5 rounded-lg z-10"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
           <div>
             <p className="text-[9px] font-bold uppercase tracking-widest text-amber-400 leading-none">AI Matched Design</p>
-            {analysis && (
-              <p className="text-[8px] text-white/55 mt-0.5 max-w-[150px] leading-tight truncate">{analysis}</p>
-            )}
+            {analysis && <p className="text-[8px] text-white/50 mt-0.5 max-w-[140px] truncate leading-tight">{analysis}</p>}
           </div>
         </motion.div>
 
-        {/* TOP-RIGHT: Score gauge */}
+        {/* TOP-RIGHT: Score gauge card */}
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="absolute top-3 right-3 bg-black/65 backdrop-blur border border-amber-500/20 rounded-xl p-2 z-10 flex flex-col items-center gap-0.5"
+          className="absolute top-3 right-3 bg-black/65 backdrop-blur border border-amber-500/20 rounded-xl p-2.5 z-10 flex flex-col items-center gap-1"
         >
-          <ScoreGauge value={matchScore} size={76} />
-          <p className="text-[7px] uppercase tracking-widest text-amber-500/55 text-center leading-tight">
-            Perfect match<br/>with your style
+          <ScoreGauge value={matchScore} />
+          <p className="text-[7px] uppercase tracking-widest text-amber-500/50 text-center leading-tight">
+            Match Score
+          </p>
+          <p className="text-[7px] text-white/35 text-center leading-tight">
+            Perfect harmony<br/>with your interior
           </p>
         </motion.div>
 
         {/* RIGHT EDGE: Spec callout lines */}
-        <div className="absolute inset-y-0 right-0 z-10 pointer-events-none" style={{ width: "160px" }}>
+        <div className="absolute inset-y-0 right-0 z-10 pointer-events-none" style={{ width: "145px" }}>
           {specLines.map((s, i) => (
             <SpecLine key={s.label} label={s.label} value={s.value} delay={0.7 + i * 0.12} topPct={s.topPct} />
           ))}
         </div>
 
-        {/* BOTTOM-LEFT: 3D view thumb */}
+        {/* BOTTOM-LEFT: 3D thumb */}
         <motion.button
-          initial={{ opacity: 0, x: -8 }}
+          initial={{ opacity: 0, x: -6 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.9 }}
           onClick={on3D}
-          className="absolute bottom-3 left-3 z-10 group flex items-center gap-1.5 bg-black/55 backdrop-blur border border-white/10 hover:border-amber-500/40 rounded-lg p-1.5 transition-all"
+          className="absolute bottom-3 left-3 z-10 group flex flex-col items-center gap-1 bg-black/60 backdrop-blur border border-amber-500/20 hover:border-amber-500/50 rounded-lg p-1.5 transition-all"
         >
-          <div className="w-10 h-8 rounded overflow-hidden border border-amber-500/20 flex-shrink-0">
-            <img src={cabin.thumbnailUrl || cabin.imageUrl} className="w-full h-full object-cover opacity-65 group-hover:opacity-90 transition-opacity" />
+          <div className="w-12 h-10 rounded overflow-hidden border border-amber-500/15">
+            <img src={cabin.thumbnailUrl || cabin.imageUrl} className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-opacity" />
           </div>
-          <div className="flex items-center gap-1 pr-1">
+          <div className="flex items-center gap-1">
             <Box className="w-2.5 h-2.5 text-amber-400" />
-            <p className="text-[7px] text-white/50 uppercase tracking-wider">3D View</p>
+            <p className="text-[7px] text-white/45 uppercase tracking-wider leading-none">Drag to rotate</p>
           </div>
+          <p className="text-[6px] text-white/30 uppercase tracking-widest leading-none">360° view</p>
         </motion.button>
-
-        {/* BOTTOM: cabin name */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="absolute bottom-3 left-0 right-0 z-10 px-4"
-        >
-          <p className="text-[9px] uppercase tracking-[0.25em] text-amber-400/65 mb-0.5">Selected Design</p>
-          <h2 className="text-xl font-serif text-white tracking-wide leading-tight">
-            {cabin.name.toUpperCase()}
-          </h2>
-        </motion.div>
       </div>
 
-      {/* ── BOTTOM INFO STRIP ── */}
+      {/* ══ BOTTOM INFO STRIP ══ */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.65, duration: 0.5 }}
-        className="px-4 pt-3 pb-3 space-y-3"
-        style={{ background: "#070504" }}
+        transition={{ delay: 0.55, duration: 0.5 }}
+        style={{ background: "#080504" }}
+        className="flex-shrink-0"
       >
-        {/* Description */}
-        {cabin.description && (
-          <p className="text-xs text-white/45 leading-relaxed line-clamp-2">{cabin.description}</p>
-        )}
+        {/* Name + desc  |  WhatsApp button */}
+        <div className="flex items-center gap-3 px-4 pt-3 pb-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-[8px] uppercase tracking-[0.25em] text-amber-400/55 mb-0.5">Selected Design</p>
+            <h2 className="text-base font-serif text-white tracking-wide leading-tight truncate">
+              {cabin.name.toUpperCase()}
+            </h2>
+            {cabin.description && (
+              <p className="text-[10px] text-white/40 leading-snug mt-0.5 line-clamp-2">{cabin.description}</p>
+            )}
+          </div>
 
-        {/* WhatsApp CTA — single button, full width */}
-        <motion.button
-          whileHover={{ scale: 1.015 }}
-          whileTap={{ scale: 0.985 }}
-          onClick={onWhatsApp}
-          className="w-full flex items-center justify-center gap-2.5 bg-[#1DA851] hover:bg-[#22c55e] text-white rounded-xl px-4 py-3 font-semibold text-sm transition-colors shadow-[0_0_24px_rgba(29,168,81,0.35)]"
-        >
-          {WA_ICON}
-          <span>GET YOUR QUOTE ON WHATSAPP</span>
-          <span className="ml-auto text-white/60">→</span>
-        </motion.button>
+          {/* WhatsApp CTA — right side, golden style matching reference */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onWhatsApp}
+            className="flex-shrink-0 flex flex-col items-center justify-center gap-1.5 rounded-xl px-4 py-3 font-semibold text-[11px] transition-colors border border-amber-700/40"
+            style={{ background: "linear-gradient(135deg, #7a5c0a, #a07810)", minWidth: "130px" }}
+          >
+            <div className="flex items-center gap-2">
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white flex-shrink-0">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.890-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+              <span className="text-white font-bold text-[11px] leading-tight text-left">GET YOUR QUOTE<br/>ON WHATSAPP</span>
+              <span className="text-white/60 text-sm">→</span>
+            </div>
+          </motion.button>
+        </div>
 
-        <p className="text-[9px] text-white/25 text-center flex items-center justify-center gap-1.5">
+        <p className="text-[8px] text-white/25 text-center pb-1.5 flex items-center justify-center gap-1.5">
           <Shield className="w-2.5 h-2.5" />
           No commitment · Instant response
         </p>
 
         {/* Stats bar */}
         {statItems.length > 0 && (
-          <div className="border-t border-amber-500/10 pt-2.5 flex items-center divide-x divide-amber-500/10 overflow-x-auto">
+          <div className="border-t border-amber-500/10 px-3 py-2 flex items-center divide-x divide-amber-500/10 overflow-x-auto">
             {statItems.map(s => (
-              <div key={s.label} className="flex items-center gap-1.5 px-3 first:pl-0 last:pr-0 flex-shrink-0">
+              <div key={s.label} className="flex items-center gap-1.5 px-2.5 first:pl-0 last:pr-0 flex-shrink-0">
                 {s.icon}
                 <div>
-                  <p className="text-[7px] uppercase tracking-widest text-amber-500/45 leading-none">{s.label}</p>
-                  <p className="text-[9px] text-white/70 leading-tight mt-0.5 whitespace-nowrap">{s.value}</p>
+                  <p className="text-[7px] uppercase tracking-widest text-amber-500/40 leading-none">{s.label}</p>
+                  <p className="text-[9px] text-white/65 leading-tight mt-0.5 whitespace-nowrap">{s.value}</p>
                 </div>
               </div>
             ))}
