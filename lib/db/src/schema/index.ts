@@ -21,3 +21,6 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./cabins";
 export * from "./leads";
+export * from "./tenants";
+export * from "./tenant_cabins";
+export * from "./usage";

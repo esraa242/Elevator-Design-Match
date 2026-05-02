@@ -14,7 +14,11 @@ router.post("/leads", async (req, res) => {
       return;
     }
     const { name, phone, cabinId, matchScore } = parsed.data;
-    const [lead] = await db.insert(leadsTable).values({ name, phone, cabinId, matchScore }).returning();
+    const tenantId = req.body.tenantId ? parseInt(req.body.tenantId) : null;
+    const [lead] = await db.insert(leadsTable).values({
+      name, phone, cabinId, matchScore,
+      ...(tenantId ? { tenantId } : {}),
+    }).returning();
     res.status(201).json(lead);
   } catch (err) {
     req.log.error({ err }, "Failed to create lead");
@@ -30,11 +34,9 @@ router.get("/leads/stats", async (req, res) => {
       .select({ count: sql<number>`count(*)::int` })
       .from(leadsTable)
       .where(gte(leadsTable.createdAt, oneWeekAgo));
-
     const [avgResult] = await db
       .select({ avg: sql<number>`round(avg(match_score))` })
       .from(leadsTable);
-
     const topCabinResult = await db
       .select({ cabinId: leadsTable.cabinId, count: sql<number>`count(*)::int` })
       .from(leadsTable)
