@@ -81,3 +81,28 @@ export async function apiDeleteCabin(cabinId: number) {
   if (!r.ok) throw new Error((await r.json()).error ?? "Failed to delete cabin");
   return r.json();
 }
+
+export async function apiRequestUploadUrl(file: File): Promise<{ uploadURL: string; objectPath: string }> {
+  const r = await fetch(`${BASE}/storage/uploads/request-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type || "application/octet-stream" }),
+  });
+  if (!r.ok) throw new Error((await r.json()).error ?? "Failed to get upload URL");
+  return r.json();
+}
+
+export async function apiUploadFile(file: File): Promise<string> {
+  const { uploadURL, objectPath } = await apiRequestUploadUrl(file);
+  const put = await fetch(uploadURL, {
+    method: "PUT", body: file,
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+  });
+  if (!put.ok) throw new Error("Failed to upload file");
+  return objectPath;
+}
+
+export function apiObjectUrl(objectPath: string): string {
+  const stripped = objectPath.replace(/^\/objects\//, "");
+  return `${BASE}/storage/objects/${stripped}`;
+}

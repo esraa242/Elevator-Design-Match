@@ -5,10 +5,12 @@ import leadsRouter from "./leads";
 import analysisRouter from "./analysis";
 import tenantsRouter from "./tenants";
 import widgetRouter from "./widget";
+import storageRouter from "./storage";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(storageRouter);
 router.use(cabinsRouter);
 router.use(leadsRouter);
 router.use(analysisRouter);

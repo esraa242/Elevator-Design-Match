@@ -1,8 +1,8 @@
-# Elevator Cabin Matcher — AI Lead Magnet
+# Elevator Cabin Matcher — AI Lead Magnet SaaS Platform
 
 ## Overview
 
-A production-ready AI-powered lead magnet tool for an elevator installation company. Visitors upload an interior photo, the AI analyzes their design style, and matches them to the best elevator cabin design — then converts them into a WhatsApp lead.
+A production-ready multi-tenant SaaS platform for an AI-powered elevator design tool. Elevator companies get an embeddable widget, brand customization, cabin design control, WhatsApp leads, usage tracking dashboard, and subscription-based usage limits.
 
 ## Stack
 
@@ -10,13 +10,14 @@ A production-ready AI-powered lead magnet tool for an elevator installation comp
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **Frontend**: React + Vite (at root `/`)
-- **API framework**: Express 5 (at `/api`)
+- **Frontend**: React + Vite
+- **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **AI**: OpenAI GPT-5 vision via Replit AI Integrations (no key needed)
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Validation**: Zod, drizzle-zod
+- **AI**: OpenAI GPT-4.1 vision via Replit AI Integrations
+- **API codegen**: Orval (contract-first OpenAPI)
+- **Object Storage**: Replit Object Storage (GCS-backed, presigned URL upload flow)
+- **Build**: esbuild
 
 ## Key Commands
 
@@ -27,39 +28,61 @@ A production-ready AI-powered lead magnet tool for an elevator installation comp
 
 ## Artifacts
 
-### Frontend: `artifacts/elevator-matcher/` (preview path: `/`)
+### Frontend Elevator Matcher: `artifacts/elevator-matcher/` (preview path: `/`)
 - Single-page multi-step flow: Upload → AI Analysis → Results → WhatsApp Lead
-- Dark luxury aesthetic with gold accents matching the reference design
+- Dark luxury aesthetic with gold accents
 - Circular match score gauge, spec annotation lines, animated transitions
 - WhatsApp CTA with pre-filled message
 
+### SaaS Dashboard: `artifacts/dashboard/` (preview path: `/dashboard`)
+- Dark gold luxury UI; React + Vite + Wouter + TanStack Query
+- Pages: overview, cabins, leads, branding, widget-embed, usage
+- Auth: token = base64(`${tenantId}:${sha256(password+SESSION_SECRET)}`), stored in localStorage as `em_token`
+- WouterRouter base = `import.meta.env.BASE_URL.replace(/\/$/, "")` → resolves to `/dashboard`
+- Cabin management: add with drag-and-drop image upload OR URL, enable/disable, delete
+- Demo: demo@ascend.com / demo1234 (pro plan, 500 req/mo, 6 cabins, 5mo usage history)
+
 ### API Server: `artifacts/api-server/` (preview path: `/api`)
-- `GET /api/cabins` — list all 6 pre-stored cabin designs
+- `GET /api/cabins` — list cabin designs (public)
 - `GET /api/cabins/:id` — get single cabin
-- `POST /api/analysis/match` — AI vision analysis + matching (accepts base64 image)
-- `POST /api/leads` — capture lead (name + WhatsApp phone)
-- `GET /api/leads/stats` — lead analytics
-- `GET /api/cabins/images/*.png` — serves AI-generated cabin images
+- `POST /api/analysis/match` — AI vision analysis + matching
+- `POST /api/leads` — capture lead
+- `GET /api/tenants/login` / `POST /api/tenants/register` — auth
+- `GET /api/tenants/me` / `PATCH /api/tenants/me` — profile
+- `GET /api/tenants/me/cabins` / `PATCH /api/tenants/me/cabins/:id` — cabin toggle
+- `POST /api/admin/cabins` / `DELETE /api/admin/cabins/:id` — cabin CRUD
+- `GET /api/tenants/me/leads` — leads list
+- `GET /api/tenants/me/usage` — usage history
+- `POST /api/storage/uploads/request-url` — presigned GCS URL for direct upload
+- `GET /api/storage/objects/:path` — serve uploaded objects
+- `GET /api/widget/widget.js` — embeddable widget JS
 
-## Database Schema
+## Object Storage Upload Flow
 
-- `cabins` — 6 elevator cabin designs with specs and image URLs
-- `leads` — captured leads with name, phone, cabin match, and score
-- `conversations` + `messages` — OpenAI integration scaffolding
+1. Client → `POST /api/storage/uploads/request-url` with `{name, size, contentType}` (JSON only, no file)
+2. Server returns `{uploadURL, objectPath}` — uploadURL is a presigned GCS URL
+3. Client → `PUT uploadURL` with the file bytes directly to GCS
+4. Store `objectPath` in DB; serve via `GET /api/storage/objects/:path`
+5. Dashboard cabins page: Upload File tab (drag-and-drop zone) or Image URL tab
 
-## Cabin Designs
+## Database Schema (lib/db/src/schema/)
 
-1. Modern Luxury Cabin — Carrara marble, LED, black marble floor
-2. Classic Royal Cabin — Walnut wood, crystal chandelier, brass
-3. Contemporary Minimal Cabin — Glass panels, chrome, porcelain
-4. Industrial Chic Cabin — Dark steel, concrete, Edison bulbs
-5. Art Deco Prestige Cabin — Black lacquer, 24K gold geometric
-6. Scandinavian Nordic Cabin — Birch wood, white lacquer, oak
+- `cabins` — elevator cabin designs with specs, image URLs, tags
+- `tenants` — SaaS customers with plan, whatsapp, branding settings
+- `tenantCabins` — join table: which cabins each tenant has enabled
+- `leads` — captured leads with cabin match and score
+- `usageEvents` — per-month usage tracking per tenant
 
-## AI Integration
+## API Codegen Notes
 
-Uses `@workspace/integrations-openai-ai-server` with GPT-5.1 vision model.
-Set up via Replit AI Integrations — no API key required.
-Env vars: `AI_INTEGRATIONS_OPENAI_BASE_URL`, `AI_INTEGRATIONS_OPENAI_API_KEY`
+- OpenAPI spec lives in `lib/api-spec/openapi.yaml`
+- Orval zod output uses `mode: "single"` (generates `lib/api-zod/src/generated/api.ts`)
+- `lib/api-zod/src/index.ts` exports only from `./generated/api` (no api.schemas)
+- React-query client uses `mode: "split"` in `lib/api-client-react`
 
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Tenant Auth Pattern
+
+```
+token = base64(`${tenantId}:${sha256(password + SESSION_SECRET)}`)
+```
+Stored in localStorage as `em_token`. `requireAuth` middleware exported from `routes/tenants.ts`.

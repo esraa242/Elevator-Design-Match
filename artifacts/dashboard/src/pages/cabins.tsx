@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { apiGetCabins, apiToggleCabin, apiCreateCabin, apiDeleteCabin } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { apiGetCabins, apiToggleCabin, apiCreateCabin, apiDeleteCabin, apiUploadFile, apiObjectUrl } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle, XCircle, Package, Loader2, Plus, X, Trash2,
-  Image, Tag, Ruler, AlertCircle, ExternalLink
+  Image, Tag, Ruler, AlertCircle, Upload, Link, Check
 } from "lucide-react";
 
 interface Cabin {
@@ -28,6 +28,8 @@ const EMPTY_FORM = {
   lighting: "", capacity: "", finish: "", warranty: "",
 };
 
+type ImageMode = "url" | "upload";
+
 export default function Cabins() {
   const [cabins, setCabins] = useState<Cabin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +39,13 @@ export default function Cabins() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [imageMode, setImageMode] = useState<ImageMode>("upload");
+  const [uploading, setUploading] = useState(false);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
+  const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     apiGetCabins().then(setCabins).finally(() => setLoading(false));
@@ -67,15 +76,63 @@ export default function Cabins() {
     }
   };
 
+  const handleFileSelect = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select an image file (JPG, PNG, WebP, etc.)");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Image must be under 10 MB");
+      return;
+    }
+    setUploadError("");
+    setUploading(true);
+    setUploadedPath(null);
+    setUploadedPreview(null);
+    try {
+      const objectPath = await apiUploadFile(file);
+      setUploadedPath(objectPath);
+      setUploadedPreview(URL.createObjectURL(file));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    let finalImageUrl = form.imageUrl;
+    if (imageMode === "upload") {
+      if (!uploadedPath) {
+        setError("Please upload a cabin image first");
+        return;
+      }
+      finalImageUrl = apiObjectUrl(uploadedPath);
+    } else {
+      if (!finalImageUrl) {
+        setError("Please provide an image URL");
+        return;
+      }
+    }
+
     setSaving(true);
     try {
-      const newCabin = await apiCreateCabin(form);
+      const newCabin = await apiCreateCabin({ ...form, imageUrl: finalImageUrl, thumbnailUrl: finalImageUrl });
       setCabins(cs => [...cs, { ...newCabin, isEnabled: true }]);
       setShowAdd(false);
       setForm(EMPTY_FORM);
+      setUploadedPath(null);
+      setUploadedPreview(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create cabin");
     } finally {
@@ -83,7 +140,21 @@ export default function Cabins() {
     }
   };
 
+  const closeModal = () => {
+    setShowAdd(false);
+    setForm(EMPTY_FORM);
+    setUploadedPath(null);
+    setUploadedPreview(null);
+    setUploadError("");
+    setError("");
+    setImageMode("upload");
+  };
+
   const enabled = cabins.filter(c => c.isEnabled).length;
+
+  const previewUrl = imageMode === "upload"
+    ? uploadedPreview
+    : form.imageUrl || null;
 
   return (
     <div className="p-8 max-w-6xl">
@@ -202,7 +273,7 @@ export default function Cabins() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={e => { if (e.target === e.currentTarget) setShowAdd(false); }}
+            onClick={e => { if (e.target === e.currentTarget) closeModal(); }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -215,7 +286,7 @@ export default function Cabins() {
                   <Plus className="w-5 h-5 text-primary" />
                   <h2 className="text-lg font-semibold text-foreground">Add Cabin Design</h2>
                 </div>
-                <button onClick={() => setShowAdd(false)} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                <button onClick={closeModal} className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -240,23 +311,109 @@ export default function Cabins() {
                 </Section>
 
                 {/* Images */}
-                <Section icon={<Image className="w-4 h-4" />} title="Images">
-                  <Field label="Image URL *">
-                    <input type="url" required value={form.imageUrl} onChange={e => set("imageUrl", e.target.value)}
-                      className="input-base" placeholder="https://example.com/cabin-photo.jpg" />
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" />
-                      Use any public image URL — Unsplash, your CDN, Google Drive share link, etc.
-                    </p>
-                  </Field>
-                  <Field label="Thumbnail URL">
-                    <input type="url" value={form.thumbnailUrl} onChange={e => set("thumbnailUrl", e.target.value)}
-                      className="input-base" placeholder="Same as image if blank" />
-                  </Field>
-                  {form.imageUrl && (
-                    <div className="mt-2 rounded-xl overflow-hidden aspect-video bg-secondary/50 border border-border">
-                      <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover"
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <Section icon={<Image className="w-4 h-4" />} title="Cabin Image">
+                  {/* Mode toggle */}
+                  <div className="flex gap-1 p-1 bg-secondary/40 rounded-xl w-fit mb-4">
+                    <button
+                      type="button"
+                      onClick={() => { setImageMode("upload"); setUploadError(""); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        imageMode === "upload" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setImageMode("url"); setUploadError(""); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                        imageMode === "url" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Link className="w-3.5 h-3.5" />
+                      Image URL
+                    </button>
+                  </div>
+
+                  {imageMode === "upload" ? (
+                    <div>
+                      {/* Drop zone */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
+                      />
+                      {!uploadedPreview ? (
+                        <div
+                          onClick={() => fileInputRef.current?.click()}
+                          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                          onDragLeave={() => setDragOver(false)}
+                          onDrop={handleDrop}
+                          className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                            dragOver
+                              ? "border-primary bg-primary/5 scale-[1.01]"
+                              : "border-border hover:border-primary/50 hover:bg-secondary/30"
+                          }`}
+                        >
+                          {uploading ? (
+                            <div className="flex flex-col items-center gap-3">
+                              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                              <p className="text-sm text-muted-foreground">Uploading image...</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Upload className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">Drop image here or click to browse</p>
+                                <p className="text-xs text-muted-foreground mt-1">JPG, PNG, WebP · Max 10 MB</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="relative rounded-xl overflow-hidden aspect-video bg-secondary/50 border border-border group">
+                          <img src={uploadedPreview} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg backdrop-blur-sm transition-colors flex items-center gap-1.5"
+                            >
+                              <Upload className="w-3 h-3" />
+                              Replace
+                            </button>
+                          </div>
+                          <div className="absolute top-2 right-2 flex items-center gap-1 bg-green-500/90 text-white text-xs px-2 py-1 rounded-full">
+                            <Check className="w-3 h-3" />
+                            Uploaded
+                          </div>
+                        </div>
+                      )}
+                      {uploadError && (
+                        <p className="flex items-center gap-1.5 text-xs text-destructive mt-2">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          {uploadError}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <Field label="Image URL *">
+                        <input type="url" value={form.imageUrl} onChange={e => set("imageUrl", e.target.value)}
+                          className="input-base" placeholder="https://example.com/cabin-photo.jpg" />
+                        <p className="text-xs text-muted-foreground mt-1">Use any public image URL — Unsplash, your CDN, etc.</p>
+                      </Field>
+                      {form.imageUrl && (
+                        <div className="mt-3 rounded-xl overflow-hidden aspect-video bg-secondary/50 border border-border">
+                          <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        </div>
+                      )}
                     </div>
                   )}
                 </Section>
@@ -299,11 +456,11 @@ export default function Cabins() {
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={() => setShowAdd(false)}
+                  <button type="button" onClick={closeModal}
                     className="flex-1 py-3 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:border-border/80 transition-colors font-medium">
                     Cancel
                   </button>
-                  <button type="submit" disabled={saving}
+                  <button type="submit" disabled={saving || uploading}
                     className="flex-1 py-3 rounded-xl font-semibold text-primary-foreground gradient-gold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                     {saving ? "Creating..." : "Add Cabin"}
