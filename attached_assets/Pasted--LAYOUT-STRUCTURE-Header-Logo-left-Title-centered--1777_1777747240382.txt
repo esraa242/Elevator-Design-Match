@@ -1,0 +1,212 @@
+📐 LAYOUT STRUCTURE
+-----------------------------------
+
+Header:
+- Logo (left)
+- Title centered:
+  "AI MATCHED DESIGN ✨"
+- Subtitle:
+  "Designed specifically for your villa"
+
+Main Section (2 columns):
+- Left: 70% → Main Cabin Viewer
+- Right: 30% → Match Panel
+
+Below:
+- Design Info
+- Alternative Designs Carousel
+- CTA Section
+
+-----------------------------------
+🖼️ MAIN COMPONENT: Cabin Viewer
+-----------------------------------
+
+Create component:
+<CabinViewer />
+
+Requirements:
+
+- Large centered container
+- Rounded corners (24px)
+- Dark background
+- Glow effect around edges
+
+Inside:
+
+1. Interactive image:
+   - Tilt on mouse movement (X/Y rotation)
+   - Smooth animation
+   - Slight zoom on hover
+
+2. Light sweep animation:
+   - Subtle moving gradient across image
+
+3. Glass reflection overlay:
+   - Transparent gradient layer
+
+4. Cinematic entry animation:
+   - blur → sharp
+   - scale 0.95 → 1
+   - fade-in
+
+5. Overlay (top-left inside image):
+   Show:
+   - "Italian Marble"
+   - "LED Lighting 3000K"
+   - "Black Glass Finish"
+
+6. Bottom-left hint:
+   "Drag to rotate 360°"
+
+-----------------------------------
+📊 MATCH PANEL (RIGHT)
+-----------------------------------
+
+Create card with glass effect.
+
+Content:
+
+1. Circular Match Score:
+   - e.g. 88%
+   - animated progress
+
+2. Breakdown bars:
+   - Style Match
+   - Material Match
+   - Luxury Match
+
+Use animated progress bars.
+
+3. Supporting text:
+   "Perfect harmony with your interior"
+
+-----------------------------------
+🏷️ DESIGN INFO SECTION
+-----------------------------------
+
+Display:
+
+- Label:
+  "SELECTED DESIGN"
+
+- Title:
+  "Modern Marble Harmony Cabin"
+
+- Description:
+  Short premium marketing sentence
+
+-----------------------------------
+🎠 ALTERNATIVE DESIGNS
+-----------------------------------
+
+Replace sidebar list with:
+
+<DesignCarousel />
+
+Features:
+
+- Horizontal scroll
+- Show 3 designs only
+- Each card:
+  - image
+  - hover zoom
+  - glow on hover
+
+Selected design:
+- gold border
+- active glow
+
+Click:
+- updates main viewer
+
+-----------------------------------
+🟢 CTA SECTION
+-----------------------------------
+
+Primary button:
+
+"Get Your Custom Elevator Quote"
+
+Style:
+- Gold gradient
+- Large button
+- Rounded corners
+
+Below text:
+"No commitment • Instant WhatsApp response"
+
+On click:
+- open WhatsApp with dynamic message
+
+-----------------------------------
+✨ MICRO INTERACTIONS
+-----------------------------------
+
+- Hover:
+  - cards scale slightly
+  - button scale 1.03
+
+- Image:
+  - tilt movement
+  - zoom
+
+- Match score:
+  - animate on load
+
+-----------------------------------
+🎥 LOADING EXPERIENCE
+-----------------------------------
+
+Before results:
+
+Show loading state:
+
+"Analyzing your villa..."
+"Matching materials..."
+"Generating best design..."
+
+Then cinematic reveal.
+
+-----------------------------------
+📱 RESPONSIVENESS
+-----------------------------------
+
+- Mobile-first
+- Stack layout vertically on mobile
+- Replace hover with touch interactions
+
+-----------------------------------
+⚡ PERFORMANCE RULES
+-----------------------------------
+
+- Optimize images
+- Lazy load components
+- Avoid heavy 3D models
+- Smooth animations only
+
+-----------------------------------
+🚫 REMOVE CURRENT ISSUES
+-----------------------------------
+
+- Remove long sidebar list
+- Remove cluttered layout
+- Reduce text density
+- Improve spacing
+
+-----------------------------------
+📦 FINAL OUTPUT
+-----------------------------------
+
+1. Clean component-based code:
+   - CabinViewer.jsx
+   - MatchPanel.jsx
+   - DesignCarousel.jsx
+   - CTASection.jsx
+
+2. Fully styled UI
+3. Smooth animations
+4. No errors
+5. Production-ready code
+
+-----------------------------------
+Now implement the redesign step-by-step
