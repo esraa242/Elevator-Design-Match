@@ -51,8 +51,8 @@ export function CabinViewer({ imageUrl, cabinName, specs, on3D }: CabinViewerPro
         style={{
           rotateX, rotateY,
           transformStyle: "preserve-3d",
-          background: "#0a0806",
-          boxShadow: "0 0 0 1px rgba(184,150,12,0.15), 0 0 40px rgba(184,150,12,0.08), inset 0 0 60px rgba(0,0,0,0.4)",
+          background: "radial-gradient(ellipse 75% 80% at 50% 50%, rgba(110,75,8,0.22) 0%, rgba(8,6,4,1) 68%)",
+          boxShadow: "0 0 0 1px rgba(184,150,12,0.15), 0 0 60px rgba(184,150,12,0.12), inset 0 0 80px rgba(0,0,0,0.35)",
         } as React.CSSProperties}
         initial={{ opacity: 0, scale: 0.95, filter: "blur(8px)" }}
         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
